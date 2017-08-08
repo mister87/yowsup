@@ -161,7 +161,8 @@ class Cli(object):
         #cv.release()
 
     def getPrompt(self):
-        return "[%s]:" % ("connected" if self.connected else "offline")
+        return ""
+        # return "[%s]:" % ("connected" if self.connected else "offline")
 
     def printPrompt(self):
         #return "Enter Message or command: (/%s)" % ", /".join(self.commandMappings)
@@ -178,6 +179,20 @@ class Cli(object):
             print("%s: %s" % (tag, message))
         else:
             print(message)
+        if prompt:
+            self.printPrompt()
+
+    def outputJSON(self, message, tag = "general", prompt = True):
+        if self.acceptingInput == True and self.lastPrompt is True:
+            print("")
+
+
+        self.lastPrompt = prompt
+
+        if tag is not None:
+            print("{\"%s\": \"%s\"}" % (tag, message))
+        else:
+            print("{\"message\": \"%s\"}" % message)
         if prompt:
             self.printPrompt()
 

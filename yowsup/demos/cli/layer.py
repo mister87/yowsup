@@ -31,7 +31,8 @@ class YowsupCliLayer(Cli, YowInterfaceLayer):
     EVENT_START             = "org.openwhatsapp.yowsup.event.cli.start"
     EVENT_SENDANDEXIT       = "org.openwhatsapp.yowsup.event.cli.sendandexit"
 
-    MESSAGE_FORMAT          = "[{FROM}({TIME})]:[{MESSAGE_ID}]\t {MESSAGE}"
+    # MESSAGE_FORMAT          = "[{FROM}({TIME})]:[{MESSAGE_ID}]\t {MESSAGE}"
+    MESSAGE_FORMAT          = "JSON"
 
     FAIL_OPT_PILLOW         = "No PIL library installed, try install pillow"
     FAIL_OPT_AXOLOTL        = "axolotl is not installed, try install python-axolotl"
@@ -92,7 +93,8 @@ class YowsupCliLayer(Cli, YowInterfaceLayer):
 
     @EventCallback(YowNetworkLayer.EVENT_STATE_DISCONNECTED)
     def onStateDisconnected(self,layerEvent):
-        self.output("Disconnected: %s" % layerEvent.getArg("reason"))
+        # self.output("Disconnected: %s" % layerEvent.getArg("reason"))
+        self.outputJSON("Disconnected: %s" % layerEvent.getArg("reason"))
         if self.disconnectAction == self.__class__.DISCONNECT_ACTION_PROMPT:
            self.connected = False
            self.notifyInputThread()
@@ -103,7 +105,8 @@ class YowsupCliLayer(Cli, YowInterfaceLayer):
         if self.connected:
             return True
         else:
-            self.output("Not connected", tag = "Error", prompt = False)
+            # self.output("Not connected", tag = "Error", prompt = False)
+            self.outputJSON("Not connected", tag = "Error", prompt = False)
             return False
 
     #### batch cmds #####
@@ -169,7 +172,8 @@ class YowsupCliLayer(Cli, YowInterfaceLayer):
         if self.assertConnected():
 
             def onSuccess(resultIqEntity, originalIqEntity):
-                self.output("Status updated successfully")
+                # self.output("Status updated successfully")
+                self.outputJSON("Status updated successfully")
 
             def onError(errorIqEntity, originalIqEntity):
                 logger.error("Error updating status")
@@ -193,7 +197,8 @@ class YowsupCliLayer(Cli, YowInterfaceLayer):
     def contact_lastseen(self, jid):
         if self.assertConnected():
             def onSuccess(resultIqEntity, originalIqEntity):
-                self.output("%s lastseen %s seconds ago" % (resultIqEntity.getFrom(), resultIqEntity.getSeconds()))
+                # self.output("%s lastseen %s seconds ago" % (resultIqEntity.getFrom(), resultIqEntity.getSeconds()))
+                self.outputJSON("%s lastseen %s seconds ago" % (resultIqEntity.getFrom(), resultIqEntity.getSeconds()))
 
             def onError(errorIqEntity, originalIqEntity):
                 logger.error("Error getting lastseen information for %s" % originalIqEntity.getTo())
@@ -207,7 +212,8 @@ class YowsupCliLayer(Cli, YowInterfaceLayer):
             with PILOptionalModule(failMessage = "No PIL library installed, try install pillow") as imp:
                 Image = imp("Image")
                 def onSuccess(resultIqEntity, originalIqEntity):
-                    self.output("Profile picture updated successfully")
+                    # self.output("Profile picture updated successfully")
+                    self.outputJSON("Profile picture updated successfully")
 
                 def onError(errorIqEntity, originalIqEntity):
                     logger.error("Error updating profile picture")
@@ -224,7 +230,8 @@ class YowsupCliLayer(Cli, YowInterfaceLayer):
     def profile_getPrivacy(self):
         if self.assertConnected():
             def onSuccess(resultIqEntity, originalIqEntity):
-                self.output("Profile privacy is: %s" %(resultIqEntity))
+                # self.output("Profile privacy is: %s" %(resultIqEntity))
+                self.outputJSON("Profile privacy is: %s" % (resultIqEntity))
 
             def onError(errorIqEntity, originalIqEntity):
                 logger.error("Error getting profile privacy")
@@ -236,7 +243,8 @@ class YowsupCliLayer(Cli, YowInterfaceLayer):
     def profile_setPrivacy(self, value="all", names=None):
         if self.assertConnected():
             def onSuccess(resultIqEntity, originalIqEntity):
-                self.output("Profile privacy set to: %s" %(resultIqEntity))
+                # self.output("Profile privacy set to: %s" %(resultIqEntity))
+                self.outputJSON("Profile privacy set to: %s" % (resultIqEntity))
 
             def onError(errorIqEntity, originalIqEntity):
                 logger.error("Error setting profile privacy")
@@ -245,7 +253,8 @@ class YowsupCliLayer(Cli, YowInterfaceLayer):
                 iq = SetPrivacyIqProtocolEntity(value, names)
                 self._sendIq(iq, onSuccess, onError)
             except Exception as inst:
-                self.output(inst.message)
+                # self.output(inst.message)
+                self.outputJSON(inst.message, tag="Error")
                 return self.print_usage()
 
 
@@ -311,7 +320,8 @@ class YowsupCliLayer(Cli, YowInterfaceLayer):
                 Image = imp("Image")
 
                 def onSuccess(resultIqEntity, originalIqEntity):
-                    self.output("Group picture updated successfully")
+                    # self.output("Group picture updated successfully")
+                    self.outputJSON("Group picture updated successfully")
 
                 def onError(errorIqEntity, originalIqEntity):
                     logger.error("Error updating Group picture")
@@ -358,7 +368,8 @@ class YowsupCliLayer(Cli, YowInterfaceLayer):
             if self.accountDelWarnings < self.__class__.ACCOUNT_DEL_WARNINGS:
                 self.accountDelWarnings += 1
                 remaining = self.__class__.ACCOUNT_DEL_WARNINGS - self.accountDelWarnings
-                self.output("Repeat delete command another %s times to send the delete request" % remaining, tag="Account delete Warning !!", prompt = False)
+                # self.output("Repeat delete command another %s times to send the delete request" % remaining, tag="Account delete Warning !!", prompt = False)
+                self.outputJSON("Repeat delete command another %s times to send the delete request" % remaining, tag="Account delete Warning !!", prompt=False)
             else:
                 entity = UnregisterIqProtocolEntity()
                 self.toLower(entity)
@@ -366,7 +377,9 @@ class YowsupCliLayer(Cli, YowInterfaceLayer):
     @clicmd("Send message to a friend")
     def message_send(self, number, content):
         if self.assertConnected():
-            outgoingMessage = TextMessageProtocolEntity(content.encode("utf-8") if sys.version_info >= (3,0) else content, to = self.aliasToJid(number))
+            import base64
+            # outgoingMessage = TextMessageProtocolEntity(content.encode("utf-8") if sys.version_info >= (3,0) else content, to = self.aliasToJid(number))
+            outgoingMessage = TextMessageProtocolEntity(base64.b64decode(content.encode("utf-8")) if sys.version_info >= (3, 0) else content, to=self.aliasToJid(number))
             self.toLower(outgoingMessage)
 
     @clicmd("Broadcast message. numbers should comma separated phone numbers")
@@ -438,7 +451,8 @@ class YowsupCliLayer(Cli, YowInterfaceLayer):
     @clicmd("Quick login")
     def L(self):
         if self.connected:
-            return self.output("Already connected, disconnect first")
+            # return self.output("Already connected, disconnect first")
+            return self.outputJSON("Already connected, disconnect first")
         self.getLayerInterface(YowNetworkLayer).connect()
         return True
 
@@ -455,7 +469,8 @@ class YowsupCliLayer(Cli, YowInterfaceLayer):
 
     @ProtocolEntityCallback("iq")
     def onIq(self, entity):
-        print(entity)
+        # print(entity)
+        print("{\"Iq\": null, \"ID\": %s, \"Type\": \"%s\", \"from\": \"%s\"}" % (entity._id, entity._type, entity._from))
 
     @ProtocolEntityCallback("receipt")
     def onReceipt(self, entity):
@@ -466,19 +481,22 @@ class YowsupCliLayer(Cli, YowInterfaceLayer):
         #formattedDate = datetime.datetime.fromtimestamp(self.sentCache[entity.getId()][0]).strftime('%d-%m-%Y %H:%M')
         #print("%s [%s]:%s"%(self.username, formattedDate, self.sentCache[entity.getId()][1]))
         if entity.getClass() == "message":
-            self.output(entity.getId(), tag = "Sent")
+            # self.output(entity.getId(), tag = "Sent")
+            self.outputJSON(entity.getId(), tag = "Sent")
             #self.notifyInputThread()
 
     @ProtocolEntityCallback("success")
     def onSuccess(self, entity):
         self.connected = True
-        self.output("Logged in!", "Auth", prompt = False)
+        # self.output("Logged in!", "Auth", prompt = False)
+        self.outputJSON("Logged in!", "Auth", prompt = False)
         self.notifyInputThread()
 
     @ProtocolEntityCallback("failure")
     def onFailure(self, entity):
         self.connected = False
-        self.output("Login Failed, reason: %s" % entity.getReason(), prompt = False)
+        # self.output("Login Failed, reason: %s" % entity.getReason(), prompt = False)
+        self.outputJSON("Login Failed, reason: %s" % entity.getReason(), prompt = False)
 
     @ProtocolEntityCallback("notification")
     def onNotification(self, notification):
@@ -505,17 +523,22 @@ class YowsupCliLayer(Cli, YowInterfaceLayer):
 
         formattedDate = datetime.datetime.fromtimestamp(message.getTimestamp()).strftime('%d-%m-%Y %H:%M')
         sender = message.getFrom() if not message.isGroupMessage() else "%s/%s" % (message.getParticipant(False), message.getFrom())
-        output = self.__class__.MESSAGE_FORMAT.format(
-            FROM = sender,
-            TIME = formattedDate,
-            MESSAGE = messageOut.encode('latin-1').decode() if sys.version_info >= (3, 0) else messageOut,
-            MESSAGE_ID = message.getId()
-            )
+        if self.__class__.MESSAGE_FORMAT == "JSON":
+            import base64
+            output = "{\"id\": \"%s\", \"sender\": \"%s\", \"timestamp\": %s, \"text\": \"%s\"}" % (message.getId(), sender, message.getTimestamp(), str(base64.b64encode(messageOut.encode('utf-8'))).replace("b'", "").replace("'", ""))
+        else:
+            output = self.__class__.MESSAGE_FORMAT.format(
+                FROM = sender,
+                TIME = formattedDate,
+                MESSAGE = messageOut.encode('utf-8').decode() if sys.version_info >= (3, 0) else messageOut,
+                MESSAGE_ID = message.getId()
+                )
 
         self.output(output, tag = None, prompt = not self.sendReceipts)
         if self.sendReceipts:
             self.toLower(message.ack(self.sendRead))
-            self.output("Sent delivered receipt"+" and Read" if self.sendRead else "", tag = "Message %s" % message.getId())
+            if self.__class__.MESSAGE_FORMAT != "JSON":
+                self.output("Sent delivered receipt"+" and Read" if self.sendRead else "", tag = "Message %s" % message.getId())
 
 
     def getTextMessageBody(self, message):

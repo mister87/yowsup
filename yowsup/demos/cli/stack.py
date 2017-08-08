@@ -6,8 +6,10 @@ from yowsup.layers.axolotl.props import PROP_IDENTITY_AUTOTRUST
 import sys
 
 class YowsupCliStack(object):
-    def __init__(self, credentials, encryptionEnabled = True):
+    def __init__(self, credentials, encryptionEnabled = True, outputType = "string"):
         stackBuilder = YowStackBuilder()
+
+        self.output = outputType
 
         self.stack = stackBuilder\
             .pushDefaultLayers(encryptionEnabled)\
@@ -19,13 +21,19 @@ class YowsupCliStack(object):
         self.stack.setProp(PROP_IDENTITY_AUTOTRUST, True)
 
     def start(self):
-        print("Yowsup Cli client\n==================\nType /help for available commands\n")
+        # print("Yowsup Cli client\n==================\nType /help for available commands\n")
         self.stack.broadcastEvent(YowLayerEvent(YowsupCliLayer.EVENT_START))
 
         try:
             self.stack.loop(timeout = 0.5, discrete = 0.5)
         except AuthError as e:
-            print("Auth Error, reason %s" % e)
+            if self.output == "json":
+                print("{\"Error\": \"Auth Error, reason %s\"}" % e)
+            else:
+                print("Auth Error, reason %s" % e)
         except KeyboardInterrupt:
-            print("\nYowsdown")
+            if self.output == "json":
+                print("{\"message\": \"Yowsdown\"}")
+            else:
+                print("\nYowsdown")
             sys.exit(0)
