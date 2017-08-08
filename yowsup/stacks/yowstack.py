@@ -40,7 +40,8 @@ YOWSUP_PROTOCOL_LAYERS_BASIC = (
 
 class YowStackBuilder(object):
 
-    def __init__(self):
+    def __init__(self, outputType = "string"):
+        self.output = outputType
         self.layers = ()
         self._props = {}
 
