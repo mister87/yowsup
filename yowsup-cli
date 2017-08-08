@@ -2,7 +2,8 @@
 __version__ = "2.0.15"
 __author__ = "Tarek Galal"
 
-import sys, argparse, yowsup, logging
+import sys, argparse, yowsup, logging, os
+from logging.handlers import RotatingFileHandler
 from yowsup.env import YowsupEnv
 
 HELP_CONFIG = """
@@ -40,6 +41,10 @@ http://openwhatsapp.org/yowsup/donate
 """
 
 logger = logging.getLogger("yowsup-cli")
+ROOT_PATH = os.path.dirname(__file__)
+if os.path.isdir(ROOT_PATH + "/logs") is not True:
+    os.mkdir(ROOT_PATH + "/logs")
+yowLogHandler = RotatingFileHandler(ROOT_PATH + "/logs/output.log", maxBytes=10737418240, backupCount=10)
 
 
 class YowArgParser(argparse.ArgumentParser):
@@ -80,9 +85,9 @@ class YowArgParser(argparse.ArgumentParser):
         self.args = vars(self.parse_args())
 
         if self.args["debug"]:
-            logging.basicConfig(level = logging.DEBUG)
+            logging.basicConfig(level = logging.DEBUG, handlers=[yowLogHandler])
         else:
-            logging.basicConfig(level = logging.INFO)
+            logging.basicConfig(level = logging.INFO, handlers=[yowLogHandler])
 
         if self.args["version"]:
             print("yowsup-cli v%s\nUsing yowsup v%s" % (__version__, yowsup.__version__))
@@ -258,6 +263,9 @@ class DemosArgParser(YowArgParser):
         syncContacts = self.add_argument_group("Sync contacts")
         syncContacts.add_argument('-S','--sync', action = "store" , help = "Sync ( check valid ) whatsapp contacts",metavar =("contacts"))
 
+        outputOpts = self.add_argument_group("Structured output")
+        outputOpts.add_argument('-o', '--output', action="store", metavar="string", help="Output structure [string|json]")
+
     def process(self):
         super(DemosArgParser, self).process()
 
@@ -290,31 +298,43 @@ class DemosArgParser(YowArgParser):
         from yowsup.demos import cli
         credentials = self._getCredentials()
         if not credentials:
-            print("Error: You must specify a configuration method")
+            if self.args["output"] == "json":
+                print("{\"Error\": \"You must specify a configuration method\"}")
+            else:
+                print("Error: You must specify a configuration method")
             sys.exit(1)
-        self.printInfoText()
-        stack = cli.YowsupCliStack(credentials, not self.args["unmoxie"])
+        # self.printInfoText()
+        stack = cli.YowsupCliStack(credentials, not self.args["unmoxie"], self.args["output"])
         stack.start()
 
     def startEcho(self):
         from yowsup.demos import echoclient
         credentials = self._getCredentials()
         if not credentials:
-            print("Error: You must specify a configuration method")
+            if self.args["output"] == "json":
+                print("{\"Error\": \"You must specify a configuration method\"}")
+            else:
+                print("Error: You must specify a configuration method")
             sys.exit(1)
         try:
             self.printInfoText()
             stack = echoclient.YowsupEchoStack(credentials, not self.args["unmoxie"])
             stack.start()
         except KeyboardInterrupt:
-            print("\nYowsdown")
+            if self.args["output"] == "json":
+                print("{\"message\": \"Yowsdown\"}")
+            else:
+                print("\nYowsdown")
             sys.exit(0)
 
     def startSendClient(self):
         from yowsup.demos import sendclient
         credentials = self._getCredentials()
         if not credentials:
-            print("Error: You must specify a configuration method")
+            if self.args["output"] == "json":
+                print("{\"Error\": \"You must specify a configuration method\"}")
+            else:
+                print("Error: You must specify a configuration method")
             sys.exit(1)
 
         try:
@@ -323,21 +343,30 @@ class DemosArgParser(YowArgParser):
                                                not self.args["unmoxie"])
             stack.start()
         except KeyboardInterrupt:
-            print("\nYowsdown")
+            if self.args["output"] == "json":
+                print("{\"message\": \"Yowsdown\"}")
+            else:
+                print("\nYowsdown")
             sys.exit(0)
 
     def startSyncContacts(self):
         from yowsup.demos import contacts
         credentials = self._getCredentials()
         if not credentials:
-            print("Error: You must specify a configuration method")
+            if self.args["output"] == "json":
+                print("{\"Error\": \"You must specify a configuration method\"}")
+            else:
+                print("Error: You must specify a configuration method")
             sys.exit(1)
         try:
             self.printInfoText()
             stack = contacts.YowsupSyncStack(credentials,self.args["sync"].split(','), not self.args["unmoxie"])
             stack.start()
         except KeyboardInterrupt:
-            print("\nYowsdown")
+            if self.args["output"] == "json":
+                print("{\"message\": \"Yowsdown\"}")
+            else:
+                print("\nYowsdown")
             sys.exit(0)
 
 
