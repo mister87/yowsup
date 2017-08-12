@@ -470,7 +470,8 @@ class YowsupCliLayer(Cli, YowInterfaceLayer):
     @ProtocolEntityCallback("iq")
     def onIq(self, entity):
         # print(entity)
-        print("{\"Iq\": null, \"ID\": %s, \"Type\": \"%s\", \"from\": \"%s\"}" % (entity._id, entity._type, entity._from))
+        # print("{\"Iq\": null, \"ID\": %s, \"Type\": \"%s\", \"from\": \"%s\"}" % (entity._id, entity._type, entity._from))
+        print("")
 
     @ProtocolEntityCallback("receipt")
     def onReceipt(self, entity):
