@@ -41,7 +41,7 @@ http://openwhatsapp.org/yowsup/donate
 """
 
 logger = logging.getLogger("yowsup-cli")
-ROOT_PATH = os.path.dirname(__file__)
+ROOT_PATH = os.path.dirname(os.path.abspath(__file__))
 if os.path.isdir(ROOT_PATH + "/logs") is not True:
     os.mkdir(ROOT_PATH + "/logs")
 yowLogHandler = RotatingFileHandler(ROOT_PATH + "/logs/output.log", maxBytes=10737418240, backupCount=10)
