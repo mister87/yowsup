@@ -41,10 +41,6 @@ http://openwhatsapp.org/yowsup/donate
 """
 
 logger = logging.getLogger("yowsup-cli")
-ROOT_PATH = os.path.dirname(os.path.abspath(__file__))
-if os.path.isdir(ROOT_PATH + "/logs") is not True:
-    os.mkdir(ROOT_PATH + "/logs")
-yowLogHandler = RotatingFileHandler(ROOT_PATH + "/logs/output.log", maxBytes=10737418240, backupCount=10)
 
 
 class YowArgParser(argparse.ArgumentParser):
@@ -83,6 +79,14 @@ class YowArgParser(argparse.ArgumentParser):
 
     def process(self):
         self.args = vars(self.parse_args())
+
+        if self.args["logpath"]:
+            LOG_PATH = self.args["logpath"]
+        else:
+            LOG_PATH = os.path.dirname(os.path.abspath(__file__)) + "/logs"
+        if os.path.isdir(LOG_PATH) is not True:
+            os.mkdir(LOG_PATH)
+        yowLogHandler = RotatingFileHandler(LOG_PATH + "/output.log", maxBytes=10737418240, backupCount=10)
 
         if self.args["debug"]:
             logging.basicConfig(level = logging.DEBUG, handlers=[yowLogHandler])
@@ -266,8 +270,13 @@ class DemosArgParser(YowArgParser):
         outputOpts = self.add_argument_group("Structured output")
         outputOpts.add_argument('-o', '--output', action="store", metavar="string", help="Output structure [string|json]")
 
+        logpathOpts = self.add_argument_group("Log path")
+        logpathOpts.add_argument('--logpath', action="store", metavar="string", help="Log path")
+
+
     def process(self):
         super(DemosArgParser, self).process()
+
 
         if self.args["env"]:
             YowsupEnv.setEnv(self.args["env"])
@@ -394,5 +403,9 @@ if __name__ == "__main__":
         sys.exit(0)
     else:
         parser = modeDict[mode]()
+        # ROOT_PATH = os.path.dirname(os.path.abspath(__file__))
+        # if os.path.isdir(ROOT_PATH + "/logs") is not True:
+        #     os.mkdir(ROOT_PATH + "/logs")
+        # yowLogHandler = RotatingFileHandler(ROOT_PATH + "/logs/output.log", maxBytes=10737418240, backupCount=10)
         if not parser.process():
             parser.print_help()
