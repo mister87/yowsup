@@ -1,0 +1,7 @@
+python-dateutil
+protobuf
+pycrypto
+python-axolotl
+argparse
+readline
+pillow
